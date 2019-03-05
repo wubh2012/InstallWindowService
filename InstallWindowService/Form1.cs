@@ -15,6 +15,7 @@ namespace InstallWindowService
 {
     public partial class Form1 : Form
     {
+        string ServiceName = string.Empty;
         public Form1()
         {
             InitializeComponent();
@@ -45,103 +46,25 @@ namespace InstallWindowService
         {
             try
             {
-                string[] cmdline = { };
-                string serviceFileName = txtPath.Text.Trim();
-                string serviceName = GetServiceName(serviceFileName);
-                if (string.IsNullOrEmpty(serviceName))
-                {
-                    txtTip.Text = "指定文件不是Windows服务！";
-                    return;
-                }
-                if (ServiceIsExisted(serviceName))
-                {
-                    txtTip.Text = "要安装的服务已经存在！";
-                    return;
-                }
-
-                TransactedInstaller transactedInstaller = new TransactedInstaller();
-                AssemblyInstaller assemblyInstaller = new AssemblyInstaller(serviceFileName, cmdline);
-                transactedInstaller.Installers.Add(assemblyInstaller);
-                transactedInstaller.Install(new System.Collections.Hashtable());
-                txtTip.Text = "服务安装成功！";
+                string serviceFilePath = txtPath.Text.Trim();
+                ServiceName = ServiceHelper.Install(serviceFilePath);
+                txtTip.Text = string.Format("{0} {1} 服务安装成功!", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), ServiceName);
             }
             catch (Exception ex)
             {
                 txtTip.Text = ex.Message.ToString();
             }
 
-
-        }
-
-        /// <summary>
-        /// 获取Windows服务的名称
-        /// </summary>
-        /// <param name="serviceFileName">文件路径</param>
-        /// <returns>服务名称</returns>
-        private string GetServiceName(string serviceFileName)
-        {
-            try
-            {
-                Assembly assembly = Assembly.LoadFrom(serviceFileName);
-                Type[] types = assembly.GetTypes();
-                foreach (Type myType in types)
-                {
-                    if (myType.IsClass && myType.BaseType == typeof(System.Configuration.Install.Installer))
-                    {
-                        FieldInfo[] fieldInfos = myType.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Default | BindingFlags.Instance | BindingFlags.Static);
-                        foreach (FieldInfo myFieldInfo in fieldInfos)
-                        {
-                            if (myFieldInfo.FieldType == typeof(System.ServiceProcess.ServiceInstaller))
-                            {
-                                ServiceInstaller serviceInstaller = (ServiceInstaller)myFieldInfo.GetValue(Activator.CreateInstance(myType));
-                                return serviceInstaller.ServiceName;
-                            }
-                        }
-                    }
-                }
-                return "";
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        private bool ServiceIsExisted(string serviceName)
-        {
-            ServiceController[] services = ServiceController.GetServices();
-            foreach (ServiceController s in services)
-            {
-                if (s.ServiceName == serviceName)
-                {
-                    return true;
-                }
-            }
-            return false;
         }
 
         private void btnUnInstall_Click(object sender, EventArgs e)
         {
             try
             {
-                string[] cmdline = { };
-                string serviceFileName = txtPath.Text.Trim();
-                string serviceName = GetServiceName(serviceFileName);
-                if (string.IsNullOrEmpty(serviceName))
-                {
-                    txtTip.Text = "指定文件不是Windows服务！";
-                    return;
-                }
-                if (!ServiceIsExisted(serviceName))
-                {
-                    txtTip.Text = "要卸载的服务不存在！";
-                    return;
-                }
-                TransactedInstaller transactedInstaller = new TransactedInstaller();
-                AssemblyInstaller assemblyInstaller = new AssemblyInstaller(serviceFileName, cmdline);
-                transactedInstaller.Installers.Add(assemblyInstaller);
-                transactedInstaller.Uninstall(null);
+                string serviceFilePath = txtPath.Text.Trim();
+                ServiceHelper.UnInstallByServicePath(serviceFilePath);
                 txtTip.Text = "服务卸载成功！";
+                ServiceName = null;
 
             }
             catch (Exception ex)
@@ -154,26 +77,14 @@ namespace InstallWindowService
         {
             try
             {
-                string serviceName = GetServiceName(txtPath.Text.Trim());
-                if (string.IsNullOrEmpty(serviceName))
+                if (!string.IsNullOrEmpty(ServiceName))
                 {
-                    txtTip.Text = "指定文件不是Windows服务！";
-                    return;
-                }
-                if (!ServiceIsExisted(serviceName))
-                {
-                    txtTip.Text = "要运行的服务不存在！";
-                    return;
-                }
-                ServiceController service = new ServiceController(serviceName);
-                if (service.Status != ServiceControllerStatus.Running && service.Status != ServiceControllerStatus.StartPending)
-                {
-                    service.Start();
-                    txtTip.Text = "服务运行成功！";
+                    ServiceHelper.Start(ServiceName);
+                    txtTip.Text = "服务启动成功！";
                 }
                 else
                 {
-                    txtTip.Text = "服务正在运行！";
+                    txtTip.Text = "请先安装服务！";
                 }
             }
             catch (Exception ex)
@@ -186,30 +97,15 @@ namespace InstallWindowService
         {
             try
             {
-                string[] cmdline = { };
-                string serviceFileName = txtPath.Text.Trim();
-                string serviceName = GetServiceName(serviceFileName);
-                if (string.IsNullOrEmpty(serviceName))
+                if (!string.IsNullOrEmpty(ServiceName))
                 {
-                    txtTip.Text = "指定文件不是Windows服务！";
-                    return;
-                }
-                if (!ServiceIsExisted(serviceName))
-                {
-                    txtTip.Text = "要停止的服务不存在！";
-                    return;
-                }
-                ServiceController service = new ServiceController(serviceName);
-                if (service.Status == ServiceControllerStatus.Running)
-                {
-                    service.Stop();
+                    ServiceHelper.Stop(ServiceName);
                     txtTip.Text = "服务停止成功！";
                 }
                 else
                 {
-                    txtTip.Text = "服务已经停止！";
+                    txtTip.Text = "请先安装服务！";
                 }
-
             }
             catch (Exception ex)
             {
