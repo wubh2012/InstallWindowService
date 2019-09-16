@@ -1,7 +1,7 @@
 # InstallWindowService
 
 #### 介绍
-本使用 WinForm 开发，提供图形化界面安装 windows 服务
+本程序使用 WinForm 开发，提供图形化界面方式安装 windows 服务
 
 #### 使用说明
 
