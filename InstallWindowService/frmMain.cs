@@ -13,10 +13,10 @@ using System.Windows.Forms;
 
 namespace InstallWindowService
 {
-    public partial class Form1 : Form
+    public partial class frmMain : Form
     {
         string ServiceName = string.Empty;
-        public Form1()
+        public frmMain()
         {
             InitializeComponent();
         }
@@ -48,11 +48,11 @@ namespace InstallWindowService
             {
                 string serviceFilePath = txtPath.Text.Trim();
                 ServiceName = ServiceHelper.Install(serviceFilePath);
-                txtTip.Text = string.Format("{0} {1} 服务安装成功!", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), ServiceName);
+                printLog($"{ServiceName} 服务安装成功");
             }
             catch (Exception ex)
             {
-                txtTip.Text = ex.Message.ToString();
+                printLog(ex.Message);
             }
 
         }
@@ -63,13 +63,13 @@ namespace InstallWindowService
             {
                 string serviceFilePath = txtPath.Text.Trim();
                 ServiceHelper.UnInstallByServicePath(serviceFilePath);
-                txtTip.Text = "服务卸载成功！";
+                printLog("服务卸载成功");
                 ServiceName = null;
 
             }
             catch (Exception ex)
             {
-                txtTip.Text = ex.Message;
+                printLog(ex.Message);
             }
         }
 
@@ -80,16 +80,16 @@ namespace InstallWindowService
                 if (!string.IsNullOrEmpty(ServiceName))
                 {
                     ServiceHelper.Start(ServiceName);
-                    txtTip.Text = "服务启动成功！";
+                    printLog("服务启动成功！");
                 }
                 else
                 {
-                    txtTip.Text = "请先安装服务！";
+                    printLog("请先安装服务！");
                 }
             }
             catch (Exception ex)
             {
-                txtTip.Text = ex.Message;
+                printLog(ex.Message);
             }
         }
 
@@ -100,17 +100,64 @@ namespace InstallWindowService
                 if (!string.IsNullOrEmpty(ServiceName))
                 {
                     ServiceHelper.Stop(ServiceName);
-                    txtTip.Text = "服务停止成功！";
+                    printLog("服务停止成功！");
                 }
                 else
                 {
-                    txtTip.Text = "请先安装服务！";
+                    printLog("请先安装服务！");
                 }
             }
             catch (Exception ex)
             {
-                txtTip.Text = ex.Message;
+                printLog(ex.Message);
             }
+        }
+
+        private void btnInstallByCmd_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string serviceFilePath = txtPath.Text.Trim();
+                string result = ServiceHelper.InstallByCmd(serviceFilePath);
+                printLog(result);
+            }
+            catch (Exception ex)
+            {
+                printLog(ex.Message);
+            }
+        }
+
+        private void btnGetServiceName_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                string serviceFilePath = txtPath.Text.Trim();
+                var serviceName = ServiceHelper.GetServiceNameByPath(serviceFilePath);
+                var msg = $"获取的服务名是 {serviceName}";
+                printLog(msg);
+                MessageBox.Show(msg);
+            }
+            catch (Exception ex)
+            {
+                printLog(ex.Message);
+            }
+
+        }
+
+        private void printLog(string msg)
+        {
+            txtTip.Text = $"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")} {msg}";
+        }
+
+        private void btnDelete_Click(object sender, EventArgs e)
+        {
+            ServiceHelper.Delete(txtPath.Text.Trim());
+        }
+
+        private void btnExecute_Click(object sender, EventArgs e)
+        {
+            var result = ServiceHelper.ExecuteCMD(txtCommand.Text.Trim());
+            printLog(result);
         }
     }
 }

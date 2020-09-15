@@ -28,7 +28,7 @@ namespace InstallWindowService
             if (principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator))
             {
                 //如果是管理员，则直接运行
-                Application.Run(new Form1());
+                Application.Run(new frmMain());
             }
             else
             {
